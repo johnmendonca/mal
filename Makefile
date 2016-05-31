@@ -77,7 +77,7 @@ DOCKERIZE =
 IMPLS = ada awk bash c d clojure coffee cpp crystal cs erlang elisp \
 	elixir es6 factor forth fsharp go groovy guile haskell haxe \
 	io java julia js kotlin lua make mal ocaml matlab miniMAL \
-	nim objc objpascal perl php plpgsql ps python r racket \
+	nim objc objpascal perl php plpgsql ps purescript python r racket \
 	rpython ruby rust scala swift swift3 tcl vb vhdl vimscript
 
 step0 = step0_repl

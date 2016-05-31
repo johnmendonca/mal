@@ -1,0 +1,4 @@
+#!/bin/bash
+MODULE=`echo ${STEP:-stepA_mal} | sed -r 's/(^|_)([a-z])/\U\2/g'`
+pulp run -m $MODULE
+
