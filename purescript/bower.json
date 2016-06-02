@@ -8,6 +8,6 @@
   ],
   "dependencies": {
     "purescript-console": "^0.1.0",
-    "purescript-simple-repl": "^2.0.0"
+    "purescript-node-readline": "^0.5.0"
   }
 }
