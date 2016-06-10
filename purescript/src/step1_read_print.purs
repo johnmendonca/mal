@@ -8,22 +8,28 @@ import Control.Monad.Eff.Exception (EXCEPTION)
 
 import Node.ReadLine (READLINE, Interface, createConsoleInterface, noCompletion, setLineHandler, setPrompt, prompt)
 
-import Reader (tokenize)
+import MalType (MalType(..))
+import Reader (read_str)
 
-read :: String -> Array String
-read s = tokenize s
+read :: String -> MalType
+read s = read_str s
 
-eval :: Array String -> Array String
+eval :: MalType -> MalType
 eval s = s
 
-print :: Array String -> String
-print s = joinWith " " ( (\x -> "'" ++ x ++ "'") <$> s)
+print :: MalType -> String
+print (MalList a)   = "(" ++ (joinWith " " $ print <$> a) ++ ")"
+print (MalSymbol s) = s
+print (MalString s) = "'" ++ s ++ "'"
+print (MalInt i)    = show i
+print MalNil        = "nil"
 
 rep :: String -> String
 rep s = (read >>> eval >>> print) s
 
 rep_loop :: forall e. Interface -> String -> Eff (console :: CONSOLE, readline :: READLINE | e) Unit
 rep_loop i s = do
+  log $ s
   log $ rep s
   prompt i
 
