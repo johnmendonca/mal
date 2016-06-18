@@ -1,65 +1,55 @@
-module Reader (Reader, read_str) where
+module Reader (read_str) where
 
 import Prelude
-import Data.Array (catMaybes, filter, index, snoc)
+import Data.Array (catMaybes, filter, head, snoc)
 import Data.Maybe (Maybe(..), maybe)
-import Data.Tuple (Tuple(Tuple), snd, curry, uncurry)
+import Data.Tuple (Tuple(Tuple), snd, curry)
 import Data.String (trim, null)
 import Data.String.Regex (Regex, match, noFlags, regex)
 import Data.Int (fromString)
 
 import MalType (MalType(..))
 
-type Reader = Tuple (Array String) Int
+type Tokens = Array String
 
-peek :: Reader -> Maybe String
-peek r = uncurry index r
-
-next :: Reader -> Reader
-next r = map (add 1) r
+tail :: forall a. Array a -> Array a
+tail a = case Data.Array.tail a of
+  Just xs -> xs
+  Nothing -> []
 
 read_str :: String -> MalType
-read_str s = snd $ curry read_form (tokenize s) 0
+read_str s = snd $ read_form (tokenize s)
 
 tokenRegex :: Regex
 tokenRegex = regex "[\\s,]*(~@|[\\[\\]{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"|;.*|[^\\s\\[\\]{}('\"`,;)]*)" noFlags { global = true }
 
-tokenize :: String -> Array String
+tokenize :: String -> Tokens
 tokenize s = filter (not <<< null) $ trim <$> maybe [] catMaybes (match tokenRegex s)
 
-read_form :: Reader -> Tuple Reader MalType
-read_form rdr =
-  case peek rdr of
-    Just "(" -> read_list rdr
-    Just s   -> read_atom rdr
-    Nothing  -> read_nothing rdr
+read_form :: Tokens -> Tuple Tokens MalType
+read_form ts =
+  case head ts of
+    Just "(" -> read_list ts
+    Just s   -> Tuple (tail ts) (read_atom s)
+    Nothing  -> Tuple (tail ts) (MalString "")
 
-read_list :: Reader -> Tuple Reader MalType
-read_list rdr = curry read_list' (next rdr) (MalList [])
+read_list :: Tokens -> Tuple Tokens MalType
+read_list ts = curry read_list' (tail ts) (MalList [])
 
-read_list' :: Tuple Reader MalType -> Tuple Reader MalType
-read_list' (Tuple rdr m) =
-  case peek rdr of
-    Just ")" -> Tuple (next rdr) m
-    Just s   -> read_list' $ map (into_mlist m) (read_form rdr)
-    Nothing  -> Tuple (next rdr) (MalString "Error: missing )")
+read_list' :: Tuple Tokens MalType -> Tuple Tokens MalType
+read_list' (Tuple ts m) =
+  case head ts of
+    Just ")" -> Tuple (tail ts) m
+    Just s   -> read_list' $ map (into_mlist m) (read_form ts)
+    Nothing  -> Tuple [] (MalString "Error: missing )")
 
 into_mlist :: MalType -> MalType -> MalType
 into_mlist (MalList arr) m = MalList (snoc arr m)
 into_mlist _             _ = MalString "Error: Expected list type."
 
-read_atom :: Reader -> Tuple Reader MalType
-read_atom rdr =
-  case peek rdr of
-    Just s   -> Tuple (next rdr) (read_atom_str s)
-    Nothing  -> Tuple (next rdr) MalNil
-
-read_atom_str :: String -> MalType
-read_atom_str s =
+read_atom :: String -> MalType
+read_atom s =
   case fromString s of
     Just i  -> MalInt i
     Nothing -> MalSymbol s
-
-read_nothing :: Reader -> Tuple Reader MalType
-read_nothing rdr = Tuple (next rdr) MalNil
 
