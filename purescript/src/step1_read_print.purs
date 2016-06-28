@@ -1,14 +1,13 @@
 module Step1ReadPrint where
 
 import Prelude
-import Data.String (joinWith)
 import Control.Monad.Eff (Eff) 
 import Control.Monad.Eff.Console (CONSOLE, log)
 import Control.Monad.Eff.Exception (EXCEPTION)
 
 import Node.ReadLine (READLINE, Interface, createConsoleInterface, noCompletion, setLineHandler, setPrompt, prompt)
 
-import MalType (MalType(..))
+import MalType (MalType)
 import Reader (read_str)
 
 read :: String -> MalType
@@ -18,11 +17,7 @@ eval :: MalType -> MalType
 eval s = s
 
 print :: MalType -> String
-print (MalList a)   = "(" ++ (joinWith " " $ print <$> a) ++ ")"
-print (MalSymbol s) = s
-print (MalString s) = "'" ++ s ++ "'"
-print (MalInt i)    = show i
-print MalNil        = "nil"
+print a = show a
 
 rep :: String -> String
 rep s = (read >>> eval >>> print) s
