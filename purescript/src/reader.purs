@@ -1,14 +1,14 @@
-module Reader (read_str) where
+module Reader (read_str, tokenize) where
 
 import Prelude
-import Data.Array (catMaybes, filter, head, snoc)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Array (filter, head)
+import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(Tuple), snd, curry)
-import Data.String (trim, null)
-import Data.String.Regex (Regex, match, noFlags, regex)
+import Data.String (null)
+import Data.String.Regex (Regex, split, noFlags, regex)
 import Data.Int (fromString)
 
-import MalType (MalType(..))
+import MalType (MalType(..), snoc_mlist)
 
 type Tokens = Array String
 
@@ -24,7 +24,7 @@ tokenRegex :: Regex
 tokenRegex = regex "[\\s,]*(~@|[\\[\\]{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"|;.*|[^\\s\\[\\]{}('\"`,;)]*)" noFlags { global = true }
 
 tokenize :: String -> Tokens
-tokenize s = filter (not <<< null) $ trim <$> maybe [] catMaybes (match tokenRegex s)
+tokenize s = filter (not <<< null) $ split tokenRegex s
 
 read_form :: Tokens -> Tuple Tokens MalType
 read_form ts =
@@ -37,15 +37,11 @@ read_list :: Tokens -> Tuple Tokens MalType
 read_list ts = curry read_list' (tail ts) (MalList [])
 
 read_list' :: Tuple Tokens MalType -> Tuple Tokens MalType
-read_list' (Tuple ts m) =
+read_list' (Tuple ts list) =
   case head ts of
-    Just ")" -> Tuple (tail ts) m
-    Just s   -> read_list' $ map (into_mlist m) (read_form ts)
+    Just ")" -> Tuple (tail ts) list
+    Just s   -> read_list' $ map (snoc_mlist list) (read_form ts)
     Nothing  -> Tuple [] (MalString "Error: missing )")
-
-into_mlist :: MalType -> MalType -> MalType
-into_mlist (MalList arr) m = MalList (snoc arr m)
-into_mlist _             _ = MalString "Error: Expected list type."
 
 read_atom :: String -> MalType
 read_atom s =

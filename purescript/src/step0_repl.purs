@@ -21,6 +21,7 @@ rep s = (read >>> eval >>> print) s
 
 rep_loop :: forall e. Interface -> String -> Eff (console :: CONSOLE, readline :: READLINE | e) Unit
 rep_loop i s = do
+  log $ s
   log $ rep s
   prompt i
 
