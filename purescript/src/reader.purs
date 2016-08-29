@@ -2,11 +2,14 @@ module Reader (read_str, tokenize) where
 
 import Prelude
 import Data.Array (filter, head)
+import Data.Array (tail) as Data.Array
 import Data.Maybe (Maybe(..))
+import Data.Either (Either(..))
 import Data.Tuple (Tuple(Tuple), snd, curry)
 import Data.String (null)
 import Data.String.Regex (Regex, split, noFlags, regex)
 import Data.Int (fromString)
+import Control.Monad.Eff.Exception.Unsafe (unsafeThrow)
 
 import MalType (MalType(..), snoc_mlist)
 
@@ -21,7 +24,12 @@ read_str :: String -> MalType
 read_str s = snd $ read_form (tokenize s)
 
 tokenRegex :: Regex
-tokenRegex = regex "[\\s,]*(~@|[\\[\\]{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"|;.*|[^\\s\\[\\]{}('\"`,;)]*)" noFlags { global = true }
+tokenRegex =
+  case regexDef of
+    Left str    -> unsafeThrow str
+    Right regex -> regex
+  where
+    regexDef = regex "[\\s,]*(~@|[\\[\\]{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"|;.*|[^\\s\\[\\]{}('\"`,;)]*)" noFlags { global = true }
 
 tokenize :: String -> Tokens
 tokenize s = filter (not <<< null) $ split tokenRegex s
