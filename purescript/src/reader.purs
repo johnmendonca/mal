@@ -7,7 +7,8 @@ import Data.Maybe (Maybe(..))
 import Data.Either (Either(..))
 import Data.Tuple (Tuple(Tuple), snd, curry)
 import Data.String (null)
-import Data.String.Regex (Regex, split, noFlags, regex)
+import Data.String.Regex (Regex, split, regex)
+import Data.String.Regex.Flags (global)
 import Data.Int (fromString)
 import Control.Monad.Eff.Exception.Unsafe (unsafeThrow)
 
@@ -29,7 +30,7 @@ tokenRegex =
     Left str    -> unsafeThrow str
     Right regex -> regex
   where
-    regexDef = regex "[\\s,]*(~@|[\\[\\]{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"|;.*|[^\\s\\[\\]{}('\"`,;)]*)" noFlags { global = true }
+    regexDef = regex "[\\s,]*(~@|[\\[\\]{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"|;.*|[^\\s\\[\\]{}('\"`,;)]*)" global
 
 tokenize :: String -> Tokens
 tokenize s = filter (not <<< null) $ split tokenRegex s
