@@ -5,14 +5,14 @@ import Data.Array (filter, head)
 import Data.Array (tail) as Data.Array
 import Data.Maybe (Maybe(..))
 import Data.Either (Either(..))
-import Data.Tuple (Tuple(Tuple), snd, curry)
+import Data.Tuple (Tuple(Tuple), snd)
 import Data.String (null)
 import Data.String.Regex (Regex, split, regex)
 import Data.String.Regex.Flags (global)
 import Data.Int (fromString)
 import Control.Monad.Eff.Exception.Unsafe (unsafeThrow)
 
-import MalType (MalType(..), snoc_mlist)
+import MalType (MalType(..), insert_into)
 
 type Tokens = Array String
 
@@ -38,18 +38,15 @@ tokenize s = filter (not <<< null) $ split tokenRegex s
 read_form :: Tokens -> Tuple Tokens MalType
 read_form ts =
   case head ts of
-    Just "(" -> read_list ts
-    Just s   -> Tuple (tail ts) (read_atom s)
-    Nothing  -> Tuple (tail ts) (MalString "")
+    Just "(" -> read_list $ Tuple (tail ts) (MalList [])
+    Just s   ->             Tuple (tail ts) (read_atom s)
+    Nothing  ->             Tuple (tail ts) (MalString "")
 
-read_list :: Tokens -> Tuple Tokens MalType
-read_list ts = curry read_list' (tail ts) (MalList [])
-
-read_list' :: Tuple Tokens MalType -> Tuple Tokens MalType
-read_list' (Tuple ts list) =
+read_list :: Tuple Tokens MalType -> Tuple Tokens MalType
+read_list (Tuple ts list) =
   case head ts of
     Just ")" -> Tuple (tail ts) list
-    Just s   -> read_list' $ map (snoc_mlist list) (read_form ts)
+    Just s   -> read_list $ map (insert_into list) (read_form ts)
     Nothing  -> Tuple [] (MalString "Error: missing )")
 
 read_atom :: String -> MalType

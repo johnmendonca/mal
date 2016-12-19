@@ -17,7 +17,7 @@ instance showMalType :: Show MalType where
   show (MalInt a)    = show a
   show MalNil        = "nil"
 
-snoc_mlist :: MalType -> MalType -> MalType
-snoc_mlist (MalList arr) m = MalList (snoc arr m)
-snoc_mlist _             _ = MalString "Error: Expected list type."
+insert_into :: MalType -> MalType -> MalType
+insert_into (MalList arr) m = MalList (snoc arr m)
+insert_into _             _ = MalString "Error: Expected list type."
 
