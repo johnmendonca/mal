@@ -7,7 +7,7 @@ import Data.Maybe (Maybe(..))
 import Data.Either (Either(..))
 import Data.Tuple (Tuple(Tuple), snd)
 import Data.String (null)
-import Data.String.Regex (Regex, split, regex)
+import Data.String.Regex (Regex, split, regex, test, replace)
 import Data.String.Regex.Flags (global)
 import Data.Int (fromString)
 import Control.Monad.Eff.Exception.Unsafe (unsafeThrow)
@@ -24,13 +24,17 @@ tail a = case Data.Array.tail a of
 read_str :: String -> MalType
 read_str s = snd $ read_form (tokenize s)
 
-tokenRegex :: Regex
-tokenRegex =
+defineRegex :: Either String Regex -> Regex
+defineRegex regexDef =
   case regexDef of
     Left str    -> unsafeThrow str
     Right regex -> regex
-  where
-    regexDef = regex "[\\s,]*(~@|[\\[\\]{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"|;.*|[^\\s\\[\\]{}('\"`,;)]*)" global
+
+tokenRegex :: Regex
+tokenRegex = defineRegex $ regex "[\\s,]*(~@|[\\[\\]{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"|;.*|[^\\s\\[\\]{}('\"`,;)]*)" global
+
+strRegex :: Regex
+strRegex = defineRegex $ regex "^\"(.*)\"$" global
 
 tokenize :: String -> Tokens
 tokenize s = filter (not <<< null) $ split tokenRegex s
@@ -50,8 +54,10 @@ read_list (Tuple ts list) =
     Nothing  -> Tuple [] (MalString "Error: missing )")
 
 read_atom :: String -> MalType
-read_atom s =
-  case fromString s of
-    Just i  -> MalInt i
-    Nothing -> MalSymbol s
+read_atom s
+  | test strRegex s = MalString $ replace strRegex "$1" s
+  | otherwise =
+    case fromString s of
+      Just i  -> MalInt i
+      Nothing -> MalSymbol s
 

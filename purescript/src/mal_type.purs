@@ -13,7 +13,7 @@ data MalType = MalList    (Array MalType)
 instance showMalType :: Show MalType where
   show (MalList a)   = "(" <> (joinWith " " $ show <$> a) <> ")"
   show (MalSymbol a) = a
-  show (MalString a) = "'" <> a <> "'"
+  show (MalString a) = "\"" <> a <> "\""
   show (MalInt a)    = show a
   show MalNil        = "nil"
 
