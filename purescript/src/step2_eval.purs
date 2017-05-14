@@ -48,7 +48,7 @@ rep_loop i s = do
   log $ rep s
   prompt i
 
-main :: forall e. Eff (console :: CONSOLE, readline :: READLINE, err :: EXCEPTION | e) Unit
+main :: forall e. Eff (console :: CONSOLE, readline :: READLINE, exception :: EXCEPTION | e) Unit
 main = do
   interface <- createConsoleInterface noCompletion
   setPrompt "user> " 0 interface
